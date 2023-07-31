@@ -58,8 +58,6 @@ router.get('/:articleId',async(req, res)=>{
     }
 });
 // modifier un article
-
-
 router.put('/:articleId', async (req, res)=> {
    try {
     const art = await Article.findByIdAndUpdate(

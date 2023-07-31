@@ -1,10 +1,21 @@
-const express = require ('express');
+const express = require('express');
 const router = express.Router();
 const User = require("../models/user")
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const nodemailer = require('nodemailer')
 
+var transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'chamtouriefatma@gmail.com',
+        pass: 'xoyazvtjddpniaia'
+    },
+    tls: {
+        rejectUnauthorized: false
+    }
+})
+require('dotenv').config()
 
 // créer un nouvel utilisateur 
 router.post('/register', async (req, res) => {
@@ -26,7 +37,7 @@ router.post('/register', async (req, res) => {
             html: `<h2>${newUser.firstname}! thank you for registreting on our website</h2>
     <h4>please verify your email to procced.. </h4>
     <a 
-    href="http://${req.headers.host}/api/users/status/edit?email=${newUser.email}">click 
+    href="http://${req.headers.host}/api/user/status/edit?email=${newUser.email}">click 
     here</a>`
         }
         transporter.sendMail(mailOption, function (error, info) {
@@ -96,13 +107,10 @@ router.post('/login', async (req, res) => {
                     success:
                         false, message: 'Your account is inactive, Please contact your administrator'
                 })
-                const token = jwt.sign({
-                    iduser:
-                        user._id, name: user.firstname, role: user.role
-                }, process.env.SECRET, {
-                    expiresIn: "1h",
-                })
-                return res.status(200).send({ success: true, user, token })
+                const token = generateAccessToken(user);
+                const refreshToken = generateRefreshToken(user);
+
+                return res.status(200).send({ success: true, user, token, refreshToken })
             } else {
                 return res.status(404).send({
                     success: false, message:
@@ -117,21 +125,44 @@ router.post('/login', async (req, res) => {
     }
 });
 
+//Access Token
+const generateAccessToken = (user) => {
+    return jwt.sign({ iduser: user._id, role: user.role }, process.env.SECRET, {
+        expiresIn: '6000s'
+    })
+}
+// Refresh
+const generateRefreshToken = (user) => {
+    return jwt.sign({ iduser: user._id, role: user.role },
+        process.env.REFRESH_TOKEN_SECRET, { expiresIn: '1y' })
+}
 
-var transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'chamtouriefatma@gmail.com',
-        pass: 'xoyazvtjddpniaia'
-    },
-    tls: {
-        rejectUnauthorized: false
+//Refresh Route
+router.post('/refreshToken', async (req, res,) => {
+    console.log(req.body.refreshToken);
+    const refreshtoken = req.body.refreshToken;
+    if (!refreshtoken) {
+        return res.status(404).send({ success: false, message: 'Token Not Found' });
     }
-})
-require('dotenv').config()
-
-
-
+    else {
+        jwt.verify(refreshtoken, process.env.REFRESH_TOKEN_SECRET, (err, user) => {
+            if (err) {
+                console.log(err)
+                return res.status(406).send({ success: false, message: 'Unauthorized' });
+            }
+            else {
+                const token = generateAccessToken(user);
+                const refreshToken = generateRefreshToken(user);
+                console.log("token-------", token);
+                res.status(200).send({
+                    success: true,
+                    token,
+                    refreshToken
+                })
+            }
+        });
+    }
+});
 
 
 module.exports = router;
