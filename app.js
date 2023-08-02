@@ -16,7 +16,7 @@ app.use(express.json());
 app.use(cors());
 mongoose.set("strictQuery", false);
 // Connexion à la base données
-mongoose.connect(process.env.DATABASECLOUD, { //accede au datatbase dans .env
+mongoose.connect(process.env.DATABASECLOUD, { //accede au dattbase dans .env
     useNewUrlParser: true,
     useUnifiedTopology: true
 })
@@ -34,7 +34,7 @@ app.use("/api/scategories", scategorieRouter)
 app.use("/api/articles", articleRouter)
 app.use('/api/payment', paymentRouter);
 //authentification backend 
-app.use('/api/users',userRouter);
+app.use('/api/user',userRouter);
 app.listen(process.env.PORT, () => {
     console.log(`Server is listening on port ${process.env.PORT}`);
 });

@@ -37,7 +37,6 @@ const userSchema = new mongoose.Schema({
     {
         timestamps: true,
     },
-
 )
 //criptage de password
 userSchema.pre('save', async function(next) {

@@ -5,6 +5,8 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const nodemailer = require('nodemailer')
 
+//url image https://firebasestorage.googleapis.com/v0/b/ecommerce-react-85a4c.appspot.com/o/345881541_640636064086763_3715560674665013371_n.jpg?alt=media&token=742b8674-ad91-4278-bd77-66c5b26de095
+
 var transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -18,15 +20,15 @@ var transporter = nodemailer.createTransport({
 require('dotenv').config()
 
 // créer un nouvel utilisateur 
-router.post('/register', async (req, res) => {
+router.post('/register',  async (req, res) => {
     try {
         let { email, password, firstname, lastname } = req.body
+        
         const user = await User.findOne({ email })
         if (user) return res.status(404).send({
             success: false, message:
                 "User already exists"
         })
-
         const newUser = new User({ email, password, firstname, lastname })
         const createdUser = await newUser.save()
         // Envoyer l'e-mail de confirmation de l'inscription
@@ -48,9 +50,6 @@ router.post('/register', async (req, res) => {
                 console.log('verification email sent to your gmail account ')
             }
         })
-
-
-
         return res.status(201).send({ success: true, message: "Account created successfully", user: createdUser })
     } catch (err) {
         console.log(err)
@@ -103,7 +102,7 @@ router.post('/login', async (req, res) => {
             let isCorrectPassword = await bcrypt.compare(password, user.password)
             if (isCorrectPassword) {
                 delete user._doc.password
-                if (!user.isActive) return res.status(200).send({
+                if (!user.isActive) return res.status(404).send({
                     success:
                         false, message: 'Your account is inactive, Please contact your administrator'
                 })
